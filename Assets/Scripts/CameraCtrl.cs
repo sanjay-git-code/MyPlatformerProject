@@ -8,7 +8,7 @@ using UnityEngine;
 public class CameraCtrl : MonoBehaviour
 {
     public Transform player;
-    public float offset;
+    public float yOffset;
 
     
     void Start()
@@ -20,7 +20,7 @@ public class CameraCtrl : MonoBehaviour
     void Update()
     {
         //makes the camera follow the player in y axis
-        transform.position = new Vector3(player.position.x, player.position.y + offset, transform.position.z);
+        transform.position = new Vector3(player.position.x, player.position.y + yOffset, transform.position.z);
 
     }
 }

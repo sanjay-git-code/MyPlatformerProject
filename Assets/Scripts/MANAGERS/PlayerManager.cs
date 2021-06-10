@@ -6,12 +6,18 @@ public class PlayerManager : MonoBehaviour
 	public float speedX;
 	public float jumpSpeedY;
 
-	bool facingRight, Jumping;
-	float speed;
+	bool facingRight, isJumping, canDoubleJump;
+	public float speed;
+	public float feetRadius;
+	public float boxWidth, boxHeight;
+	public float delayForDoubleJump;
+
+	public Transform feet;
+	public LayerMask whatIsGround;
 
 	Animator anim;
 	Rigidbody2D rb;
-
+	SpriteRenderer sr;
 	// Use this for initialization
 	void Start () 
 	{
@@ -20,7 +26,7 @@ public class PlayerManager : MonoBehaviour
 		facingRight = true;
 	}
 	
-	// Update is called once per frame
+
 	void Update () 
 	{
 		// player movement
@@ -54,7 +60,7 @@ public class PlayerManager : MonoBehaviour
 		// jumping player code
 		if(Input.GetKeyDown(KeyCode.UpArrow))
 		{
-			Jumping = true;
+			isJumping = true;
 			rb.AddForce(new Vector2(rb.velocity.x, jumpSpeedY));
 			anim.SetInteger("State",3);
 		}
@@ -64,11 +70,11 @@ public class PlayerManager : MonoBehaviour
 	{
 		// code for player movement 
 
-		if(playerSpeed < 0 && !Jumping || playerSpeed > 0 && !Jumping)
+		if(playerSpeed < 0 && !isJumping || playerSpeed > 0 && !isJumping)
 		{
 			anim.SetInteger("State",2);
 		}
-		if(playerSpeed == 0 && !Jumping)
+		if(playerSpeed == 0 && !isJumping)
 		{
 			anim.SetInteger("State",0);
 		}
@@ -93,7 +99,7 @@ public class PlayerManager : MonoBehaviour
 	{
 		if(other.gameObject.tag == "GROUND")
 		{
-			Jumping = false;
+			isJumping = false;
 			anim.SetInteger("State",0);
 		}
 	}
@@ -115,7 +121,7 @@ public class PlayerManager : MonoBehaviour
 
 	public void Jump()
 	{
-		Jumping = true;
+		isJumping = true;
 		rb.AddForce(new Vector2(rb.velocity.x, jumpSpeedY));
 		anim.SetInteger("State",3);
 	}
