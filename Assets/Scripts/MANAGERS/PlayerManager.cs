@@ -1,175 +1,149 @@
-﻿using UnityEngine;
-using System.Collections;
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 
-public class PlayerManager : MonoBehaviour 
+/// <summary>
+/// Manages:
+/// 1. the player movement and flipping
+/// 2. the player animation
+/// </summary>
+public class PlayerManager : MonoBehaviour
 {
-	public float speedX;
-	public float jumpSpeedY;
+    //1. declare public bool isGrounded, Transform feet, float feetRadius, layerMask whatIsGround
+    //2. show Physics2D.OverlapCircle() method to check if player is grounded
+    //3. then show preferred way for this cat by using Physics2D.OverlapBox
 
-	bool facingRight, isJumping, canDoubleJump, isGrounded;
-	public float speed;
-	public float feetRadius;
-	public float boxWidth, boxHeight;
-	public float delayForDoubleJump;
+    [Tooltip("this is a positive integer which speed up the player movement")]
+    public int speedBoost;  // set this to 5
+    public float jumpSpeed; // set this to 600
+    public bool isGrounded;
+    public Transform feet;
+    public float feetRadius;
+    public float boxWidth;
+    public float boxHeight;
+    public float delayForDoubleJump;
+    public LayerMask whatIsGround;
+    public Transform leftBulletSpawnPos, rightBulletSpawnPos;
+    public GameObject leftBullet, rightBullet;
 
-	public Transform feet;
-	public Transform leftBulletSpawnPos, rightBulletSpawnPos;
-	public LayerMask whatIsGround;
-	public GameObject leftBullet, rightBullet;
+    Rigidbody2D rb;
+    SpriteRenderer sr;
+    Animator anim;
+    bool isJumping, canDoubleJump;
 
-	Animator anim;
-	Rigidbody2D rb;
-	SpriteRenderer sr;
-	// Use this for initialization
-	void Start () 
-	{
-		anim = GetComponent<Animator>();
-		rb = GetComponent<Rigidbody2D>();
-		sr = GetComponent<SpriteRenderer>();
-		facingRight = true;
-	}
-	
 
-	void Update () 
-	{
-		isGrounded = Physics2D.OverlapBox(new Vector2(feet.position.x,feet.position.y), new Vector2(boxHeight,boxWidth),whatIsGround);
-
-		// player movement
-		MovePlayer(speed);
-
-		// Flipping code
-		Flip ();
-
-		// left player movement
-		if(Input.GetKeyDown(KeyCode.LeftArrow))
-		{
-			speed = -speedX;
-		}
-		if(Input.GetKeyUp(KeyCode.LeftArrow))
-		{
-			speed = 0;
-		}
-		//
-
-		// right player movement
-		if(Input.GetKeyDown(KeyCode.RightArrow))
-		{
-			speed = speedX;
-		}
-		if(Input.GetKeyUp(KeyCode.RightArrow))
-		{
-			speed = 0;
-		}
-		//
-
-		// jumping player code
-		if(Input.GetKeyDown(KeyCode.UpArrow))
-		{
-			isJumping = true;
-			rb.AddForce(new Vector2(rb.velocity.x, jumpSpeedY));
-			anim.SetInteger("State",3);
-		}
-
-		if(Input.GetButtonDown("Fire1"))
-        {
-			FireBullets();
-        }
-	}
-
-	void MovePlayer(float playerSpeed)
-	{
-		// code for player movement 
-
-		if(playerSpeed < 0 && !isJumping || playerSpeed > 0 && !isJumping)
-		{
-			anim.SetInteger("State",2);
-		}
-		if(playerSpeed == 0 && !isJumping)
-		{
-			anim.SetInteger("State",0);
-		}
-
-		rb.velocity = new Vector3(speed, rb.velocity.y,0);
-	}
-
-	void Flip()
-	{
-		// code to flip the player direction
-		if(speed > 0 && !facingRight || speed < 0 && facingRight)
-		{
-			facingRight = !facingRight;
-
-			Vector3 temp = transform.localScale;
-			temp.x *= -1;
-			transform.localScale = temp;
-		}
-	}
-
-	void OnCollisionEnter2D(Collision2D other)
-	{
-		if(other.gameObject.tag == "GROUND")
-		{
-			isJumping = false;
-			anim.SetInteger("State",0);
-		}
-	}
-
-	public void WalkLeft()
-	{
-		speed = -speedX;
-	}
-
-	public void WalkRight()
-	{
-		speed = speedX;
-	}
-
-	public void StopMoving()
-	{
-		speed = 0;
-	}
-
-	public void Jump()
-	{
-		if (isGrounded)
-		{
-			isJumping = true;
-			rb.AddForce(new Vector2(rb.velocity.x, jumpSpeedY));
-			anim.SetInteger("State", 3);
-
-			Invoke("EnableDoubleJump", delayForDoubleJump);
-		}
-
-		if(canDoubleJump && !isGrounded)
-        {
-			rb.velocity = Vector2.zero;
-			rb.AddForce(new Vector2(rb.velocity.x, jumpSpeedY));
-			anim.SetInteger("State", 3);
-
-			canDoubleJump = false;
-		}
-	}
-
-	void EnableDoubleJump()
+    void Start()
     {
-		canDoubleJump = true;
+        rb = GetComponent<Rigidbody2D>();
+        sr = GetComponent<SpriteRenderer>();
+        anim = GetComponent<Animator>();
     }
 
-	void FireBullets()
+    void Update()
     {
-		if(sr.flipX)
+        //isGrounded = Physics2D.OverlapCircle(feet.position, feetRadius, whatIsGround);
+
+        isGrounded = Physics2D.OverlapBox(new Vector2(feet.position.x, feet.position.y), new Vector2(boxWidth, boxHeight), 360.0f, whatIsGround);
+
+        float playerSpeed = Input.GetAxisRaw("Horizontal"); // value will be 1, -1 or 0
+        playerSpeed *= speedBoost;
+
+        if (playerSpeed != 0)
+            MoveHorizontal(playerSpeed);
+        else
+            StopMoving();
+
+        if (Input.GetButtonDown("Jump"))
+            Jump();
+
+        if (Input.GetButtonDown("Fire1"))
         {
-			Instantiate(leftBullet, leftBulletSpawnPos.position, Quaternion.identity);
-		}
+            FireBullets();
+        }
+
+        ShowFalling();
+    }
+
+    void OnDrawGizmos()
+    {
+        //Gizmos.DrawWireSphere(feet.position, feetRadius);
+
+        Gizmos.DrawWireCube(feet.position, new Vector3(boxWidth, boxHeight, 0));
+    }
+
+    void MoveHorizontal(float playerSpeed)
+    {
+        rb.velocity = new Vector2(playerSpeed, rb.velocity.y);
+
+        if (playerSpeed < 0)
+            sr.flipX = true;
+        else if (playerSpeed > 0)
+            sr.flipX = false;
+
+        if (!isJumping)
+            anim.SetInteger("State", 1);
+    }
+
+    void StopMoving()
+    {
+        rb.velocity = new Vector2(0, rb.velocity.y);
+
+        if (!isJumping)
+            anim.SetInteger("State", 0);
+    }
+
+    void ShowFalling()
+    {
+        if (rb.velocity.y < 0)
+        {
+            anim.SetInteger("State", 3);
+        }
+    }
+
+    void Jump()
+    {
+        if (isGrounded)
+        {
+            isJumping = true;
+            rb.AddForce(new Vector2(0, jumpSpeed)); // simply make the player jump in the y axis or upwards
+            anim.SetInteger("State", 2);
+
+            Invoke("EnableDoubleJump", delayForDoubleJump);
+        }
+
+        if (canDoubleJump && !isGrounded)
+        {
+            rb.velocity = Vector2.zero;
+            rb.AddForce(new Vector2(0, jumpSpeed)); // simply make the player jump in the y axis or upwards
+            anim.SetInteger("State", 2);
+
+            canDoubleJump = false;
+        }
+    }
+
+    void FireBullets()
+    {
+        // makes the player fire bullets in the left direction
+        if (sr.flipX)
+        {
+            Instantiate(leftBullet, leftBulletSpawnPos.position, Quaternion.identity);
+        }
+
+        // makes the player fire bullets in the right direction
+        if (!sr.flipX)
+        {
+            Instantiate(rightBullet, rightBulletSpawnPos.position, Quaternion.identity);
+        }
+    }
+
+    void EnableDoubleJump()
+    {
+        canDoubleJump = true;
+    }
+
+    void OnCollisionEnter2D(Collision2D other)
+    {
+        if (other.gameObject.CompareTag("GROUND"))
+            isJumping = false;
     }
 }
-
-
-
-
-
-
-
-
-
-
