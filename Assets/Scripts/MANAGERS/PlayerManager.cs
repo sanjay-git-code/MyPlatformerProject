@@ -6,14 +6,16 @@ public class PlayerManager : MonoBehaviour
 	public float speedX;
 	public float jumpSpeedY;
 
-	bool facingRight, isJumping, canDoubleJump;
+	bool facingRight, isJumping, canDoubleJump, isGrounded;
 	public float speed;
 	public float feetRadius;
 	public float boxWidth, boxHeight;
 	public float delayForDoubleJump;
 
 	public Transform feet;
+	public Transform leftBulletSpawnPos, rightBulletSpawnPos;
 	public LayerMask whatIsGround;
+	public GameObject leftBullet, rightBullet;
 
 	Animator anim;
 	Rigidbody2D rb;
@@ -23,12 +25,15 @@ public class PlayerManager : MonoBehaviour
 	{
 		anim = GetComponent<Animator>();
 		rb = GetComponent<Rigidbody2D>();
+		sr = GetComponent<SpriteRenderer>();
 		facingRight = true;
 	}
 	
 
 	void Update () 
 	{
+		isGrounded = Physics2D.OverlapBox(new Vector2(feet.position.x,feet.position.y), new Vector2(boxHeight,boxWidth),whatIsGround);
+
 		// player movement
 		MovePlayer(speed);
 
@@ -64,6 +69,11 @@ public class PlayerManager : MonoBehaviour
 			rb.AddForce(new Vector2(rb.velocity.x, jumpSpeedY));
 			anim.SetInteger("State",3);
 		}
+
+		if(Input.GetButtonDown("Fire1"))
+        {
+			FireBullets();
+        }
 	}
 
 	void MovePlayer(float playerSpeed)
@@ -121,10 +131,37 @@ public class PlayerManager : MonoBehaviour
 
 	public void Jump()
 	{
-		isJumping = true;
-		rb.AddForce(new Vector2(rb.velocity.x, jumpSpeedY));
-		anim.SetInteger("State",3);
+		if (isGrounded)
+		{
+			isJumping = true;
+			rb.AddForce(new Vector2(rb.velocity.x, jumpSpeedY));
+			anim.SetInteger("State", 3);
+
+			Invoke("EnableDoubleJump", delayForDoubleJump);
+		}
+
+		if(canDoubleJump && !isGrounded)
+        {
+			rb.velocity = Vector2.zero;
+			rb.AddForce(new Vector2(rb.velocity.x, jumpSpeedY));
+			anim.SetInteger("State", 3);
+
+			canDoubleJump = false;
+		}
 	}
+
+	void EnableDoubleJump()
+    {
+		canDoubleJump = true;
+    }
+
+	void FireBullets()
+    {
+		if(sr.flipX)
+        {
+			Instantiate(leftBullet, leftBulletSpawnPos.position, Quaternion.identity);
+		}
+    }
 }
 
 
