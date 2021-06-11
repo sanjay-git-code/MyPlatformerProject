@@ -7,7 +7,7 @@ using UnityEngine;
 /// 1. the player movement and flipping
 /// 2. the player animation
 /// </summary>
-public class PlayerManager : MonoBehaviour
+public class PlayerCtrl : MonoBehaviour
 {
     //1. declare public bool isGrounded, Transform feet, float feetRadius, layerMask whatIsGround
     //2. show Physics2D.OverlapCircle() method to check if player is grounded
@@ -17,14 +17,14 @@ public class PlayerManager : MonoBehaviour
     public int speedBoost;  // set this to 5
     public float jumpSpeed; // set this to 600
     public bool isGrounded;
-    public Transform feet;
-    public float feetRadius;
-    public float boxWidth;
-    public float boxHeight;
+    //  public Transform feet;
+    // public float feetRadius;
+    // public float boxWidth;
+    // public float boxHeight;
     public float delayForDoubleJump;
-    public LayerMask whatIsGround;
-    public Transform leftBulletSpawnPos, rightBulletSpawnPos;
-    public GameObject leftBullet, rightBullet;
+   // public LayerMask whatIsGround;
+    // public Transform leftBulletSpawnPos, rightBulletSpawnPos;
+    //  public GameObject leftBullet, rightBullet;
 
     Rigidbody2D rb;
     SpriteRenderer sr;
@@ -43,7 +43,7 @@ public class PlayerManager : MonoBehaviour
     {
         //isGrounded = Physics2D.OverlapCircle(feet.position, feetRadius, whatIsGround);
 
-        isGrounded = Physics2D.OverlapBox(new Vector2(feet.position.x, feet.position.y), new Vector2(boxWidth, boxHeight), 360.0f, whatIsGround);
+        //  isGrounded = Physics2D.OverlapBox(new Vector2(feet.position.x, feet.position.y), new Vector2(boxWidth, boxHeight), 360.0f, whatIsGround);
 
         float playerSpeed = Input.GetAxisRaw("Horizontal"); // value will be 1, -1 or 0
         playerSpeed *= speedBoost;
@@ -68,7 +68,7 @@ public class PlayerManager : MonoBehaviour
     {
         //Gizmos.DrawWireSphere(feet.position, feetRadius);
 
-        Gizmos.DrawWireCube(feet.position, new Vector3(boxWidth, boxHeight, 0));
+        // Gizmos.DrawWireCube(feet.position, new Vector3(boxWidth, boxHeight, 0));
     }
 
     void MoveHorizontal(float playerSpeed)
@@ -126,13 +126,13 @@ public class PlayerManager : MonoBehaviour
         // makes the player fire bullets in the left direction
         if (sr.flipX)
         {
-            Instantiate(leftBullet, leftBulletSpawnPos.position, Quaternion.identity);
+            // Instantiate(leftBullet, leftBulletSpawnPos.position, Quaternion.identity);
         }
 
         // makes the player fire bullets in the right direction
         if (!sr.flipX)
         {
-            Instantiate(rightBullet, rightBulletSpawnPos.position, Quaternion.identity);
+            // Instantiate(rightBullet, rightBulletSpawnPos.position, Quaternion.identity);
         }
     }
 
